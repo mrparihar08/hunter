@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.get("/deep-links", response_model=List[DeepLinkQuery])
-async def get_curated_deep_links(current_user: User = Depends(get_current_user)):
+async def get_curated_deep_links():
     """Returns curated high-yield search queries across LinkedIn, X, Upwork, and Facebook."""
     return generate_curated_deep_links()
 
@@ -19,7 +19,6 @@ async def get_curated_deep_links(current_user: User = Depends(get_current_user))
 async def generate_custom_link(
     platform: str = Query(..., description="Target platform: linkedin, twitter, upwork, facebook, instagram"),
     keywords: str = Query(..., description="Search keyword terms"),
-    current_user: User = Depends(get_current_user),
 ):
     """Generates a direct platform query link given custom user keywords."""
     url = build_custom_deep_link(platform, keywords)

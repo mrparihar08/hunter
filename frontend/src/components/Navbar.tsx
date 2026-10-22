@@ -1,13 +1,23 @@
 import React from 'react';
-import { Compass, Kanban, CalendarCheck2, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { Compass, Kanban, CalendarCheck2, LayoutDashboard, ShieldCheck, LogIn, LogOut } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: string;
   onTabChange: (tab: string) => void;
   dueTasksCount?: number;
+  user: any;
+  onOpenAuth: () => void;
+  onLogout: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange, dueTasksCount = 0 }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  currentTab,
+  onTabChange,
+  dueTasksCount = 0,
+  user,
+  onOpenAuth,
+  onLogout,
+}) => {
   const navItems = [
     { id: 'discover', label: 'Discover Leads', icon: Compass },
     { id: 'pipeline', label: 'Lead Pipeline', icon: Kanban },
@@ -57,10 +67,29 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange, dueTask
         </nav>
 
         <div className="flex items-center space-x-3 text-xs text-slate-400">
-          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/60">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-slate-300">Authorized Team</span>
-          </div>
+          {user ? (
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-slate-200 font-medium">{user.full_name || user.email}</span>
+              </div>
+              <button
+                onClick={onLogout}
+                title="Sign out"
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onOpenAuth}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold shadow-md shadow-sky-500/20 transition-all text-xs"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In / Setup</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

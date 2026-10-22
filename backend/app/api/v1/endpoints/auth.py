@@ -11,6 +11,48 @@ from app.schemas.user import Token, UserCreate, UserResponse
 router = APIRouter()
 
 
+@router.get("/setup-status")
+async def get_setup_status(db: AsyncSession = Depends(get_db)):
+    """Checks whether the initial workspace owner has been set up."""
+    stmt = select(User)
+    result = await db.execute(stmt)
+    has_owner = result.scalars().first() is not None
+    return {"is_initialized": has_owner}
+
+
+@router.post("/bootstrap-owner", response_model=Token)
+async def bootstrap_owner(
+    user_in: UserCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    """Initializes the primary workspace owner account (only allowed when 0 users exist)."""
+    stmt = select(User)
+    result = await db.execute(stmt)
+    if result.scalars().first() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Workspace owner is already initialized. Please login.",
+        )
+
+    owner = User(
+        email=user_in.email.lower().strip(),
+        full_name=user_in.full_name.strip(),
+        hashed_password=get_password_hash(user_in.password),
+        role=UserRole.OWNER_ADMIN,
+        is_active=True,
+    )
+    db.add(owner)
+    await db.commit()
+    await db.refresh(owner)
+
+    token = create_access_token(subject=owner.id)
+    return Token(
+        access_token=token,
+        token_type="bearer",
+        user=UserResponse.model_validate(owner),
+    )
+
+
 @router.post("/login", response_model=Token)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
