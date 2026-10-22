@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  KanBan,
+  Kanban,
   ShieldAlert,
   Sparkles,
   Mail,
@@ -8,7 +8,6 @@ import {
   ExternalLink,
   ChevronRight,
   CheckCircle2,
-  AlertTriangle,
   Loader2,
   Copy,
 } from 'lucide-react';
@@ -137,7 +136,7 @@ export const Pipeline: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <KanBan className="w-6 h-6 text-sky-400" />
+            <Kanban className="w-6 h-6 text-sky-400" />
             Lead Pipeline Management
           </h1>
           <p className="text-sm text-slate-400 mt-1">

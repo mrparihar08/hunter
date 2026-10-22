@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, KanBan, CalendarCheck2, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { Compass, Kanban, CalendarCheck2, LayoutDashboard, ShieldCheck } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: string;
@@ -10,7 +10,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange, dueTasksCount = 0 }) => {
   const navItems = [
     { id: 'discover', label: 'Discover Leads', icon: Compass },
-    { id: 'pipeline', label: 'Lead Pipeline', icon: KanBan },
+    { id: 'pipeline', label: 'Lead Pipeline', icon: Kanban },
     { id: 'followups', label: 'Follow-ups', icon: CalendarCheck2, badge: dueTasksCount },
     { id: 'dashboard', label: 'Analytics', icon: LayoutDashboard },
   ];

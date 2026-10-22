@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Plus, Search, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Compass, ExternalLink, Plus, Search, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { DeepLinkQuery } from '../types';
 import { searchService, leadService } from '../services/api';
 
@@ -10,7 +10,6 @@ export const Discover: React.FC = () => {
   // Custom link state
   const [customPlatform, setCustomPlatform] = useState('linkedin');
   const [customKeywords, setCustomKeywords] = useState('');
-  const [customUrl, setCustomUrl] = useState('');
 
   // Quick Ingest Modal
   const [showIngestModal, setShowIngestModal] = useState(false);
@@ -46,7 +45,6 @@ export const Discover: React.FC = () => {
     if (!customKeywords.trim()) return;
     try {
       const res = await searchService.getCustomLink(customPlatform, customKeywords);
-      setCustomUrl(res.generated_url);
       window.open(res.generated_url, '_blank');
     } catch (err) {
       console.error(err);

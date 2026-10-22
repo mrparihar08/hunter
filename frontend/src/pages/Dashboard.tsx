@@ -4,7 +4,6 @@ import { analyticsService } from '../services/api';
 
 export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
   const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadStats();
@@ -12,13 +11,10 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
 
   const loadStats = async () => {
     try {
-      setLoading(true);
       const res = await analyticsService.getOverview();
       setData(res);
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
