@@ -267,6 +267,21 @@ def compile_search_query(req: QueryCompileRequest) -> CompiledQueryResponse:
         if req.language in ("hi", "hinglish", "all"):
             positives.extend(ind["hinglish_variants"][:2])
 
+    # Inject service type intents if specified
+    if req.service_type == "redesign":
+        positives.append("website redesign")
+    elif req.service_type == "ecommerce":
+        positives.append("Shopify store")
+        positives.append("ecommerce website")
+    elif req.service_type == "mvp":
+        positives.append("MVP web app")
+    elif req.service_type == "maintenance":
+        positives.append("website maintenance")
+
+    # Inject budget signals if enabled
+    if req.require_budget_signals:
+        positives.append("budget")
+
     # If empty, provide sensible default
     if not positives:
         if req.language in ("hi", "hinglish"):

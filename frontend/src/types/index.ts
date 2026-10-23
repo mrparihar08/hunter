@@ -107,6 +107,9 @@ export interface QueryCompileRequest {
   negative_keywords: string[];
   industry_id?: string;
   location_target?: string;
+  service_type?: string;
+  recency?: string;
+  require_budget_signals?: boolean;
   language?: string;
   intent_preset?: string;
   subreddits?: string[];

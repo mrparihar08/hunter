@@ -16,6 +16,11 @@ import {
   Trash2,
   Bookmark,
   Check,
+  RotateCcw,
+  CopyPlus,
+  DollarSign,
+  Clock,
+  RefreshCw,
 } from 'lucide-react';
 import {
   DeepLinkQuery,
@@ -40,6 +45,9 @@ export const Discover: React.FC = () => {
   const [platform, setPlatform] = useState('twitter');
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
+  const [serviceType, setServiceType] = useState('');
+  const [recency, setRecency] = useState('all');
+  const [requireBudget, setRequireBudget] = useState(false);
   const [language, setLanguage] = useState('en');
   const [positiveTags, setPositiveTags] = useState<string[]>([
     'need a website',
@@ -83,6 +91,7 @@ export const Discover: React.FC = () => {
   const [icebreakerPlatform, setIcebreakerPlatform] = useState('TWITTER');
   const [icebreakerTone, setIcebreakerTone] = useState('FRIENDLY');
   const [icebreakerLanguage, setIcebreakerLanguage] = useState('en');
+  const [icebreakerPortfolio, setIcebreakerPortfolio] = useState('');
   const [icebreakerResult, setIcebreakerResult] = useState<string>('');
   const [icebreakerSubject, setIcebreakerSubject] = useState<string | null>(null);
   const [icebreakerLoading, setIcebreakerLoading] = useState(false);
@@ -98,7 +107,17 @@ export const Discover: React.FC = () => {
 
   useEffect(() => {
     handleCompile();
-  }, [platform, selectedIndustry, selectedLocation, language, positiveTags, negativeTags]);
+  }, [
+    platform,
+    selectedIndustry,
+    selectedLocation,
+    serviceType,
+    recency,
+    requireBudget,
+    language,
+    positiveTags,
+    negativeTags,
+  ]);
 
   const loadCatalogs = async () => {
     try {
@@ -113,12 +132,11 @@ export const Discover: React.FC = () => {
       setCuratedQueries(cList);
       setDorkQueries(dList);
 
-      // Load presets if user is logged in
       try {
         const pList = await searchService.listPresets();
         setUserPresets(pList);
       } catch {
-        // Ignored if not logged in
+        // Ignored if unauthenticated
       }
     } catch (err) {
       console.error('Failed to load search catalogs', err);
@@ -134,6 +152,9 @@ export const Discover: React.FC = () => {
         negative_keywords: negativeTags,
         industry_id: selectedIndustry || undefined,
         location_target: selectedLocation || undefined,
+        service_type: serviceType || undefined,
+        recency: recency !== 'all' ? recency : undefined,
+        require_budget_signals: requireBudget,
         language,
         intent_preset: 'HIGH',
       });
@@ -147,6 +168,18 @@ export const Discover: React.FC = () => {
     } finally {
       setCompileLoading(false);
     }
+  };
+
+  const handleResetFilters = () => {
+    setPlatform('twitter');
+    setSelectedIndustry('');
+    setSelectedLocation('');
+    setServiceType('');
+    setRecency('all');
+    setRequireBudget(false);
+    setLanguage('en');
+    setPositiveTags(['need a website', 'looking for a web developer']);
+    setNegativeTags(['I am a developer', 'hire me', 'my portfolio', 'course']);
   };
 
   const addPositiveTag = () => {
@@ -175,7 +208,6 @@ export const Discover: React.FC = () => {
     setSelectedIndustry(indId);
     const ind = niches.find((n) => n.id === indId);
     if (ind) {
-      // Add industry buying intent tags
       const updated = Array.from(new Set([...positiveTags, ...ind.buying_intents.slice(0, 2)]));
       setPositiveTags(updated);
       const negUpdated = Array.from(new Set([...negativeTags, ...ind.recommended_negatives]));
@@ -215,6 +247,24 @@ export const Discover: React.FC = () => {
     setActiveTab('builder');
   };
 
+  const handleDuplicatePreset = async (preset: QueryPreset) => {
+    try {
+      const copy = await searchService.createPreset({
+        preset_name: `${preset.preset_name} (Copy)`,
+        platform: preset.platform,
+        industry: preset.industry,
+        location_target: preset.location_target,
+        positive_keywords: preset.positive_keywords,
+        negative_keywords: preset.negative_keywords,
+        language: preset.language,
+        intent_level: preset.intent_level,
+      });
+      setUserPresets([copy, ...userPresets]);
+    } catch {
+      alert('Please Sign In to duplicate presets.');
+    }
+  };
+
   const handleDeletePreset = async (id: string) => {
     try {
       await searchService.deletePreset(id);
@@ -236,6 +286,7 @@ export const Discover: React.FC = () => {
         industry: selectedIndustry,
         tone: icebreakerTone,
         language: icebreakerLanguage,
+        portfolio_url: icebreakerPortfolio || undefined,
       });
       setIcebreakerResult(res.message_body);
       setIcebreakerSubject(res.subject_line || null);
@@ -312,10 +363,10 @@ export const Discover: React.FC = () => {
       </div>
 
       {/* Navigation Sub-Tabs */}
-      <div className="flex items-center space-x-2 border-b border-slate-800 pb-2">
+      <div className="flex items-center space-x-2 border-b border-slate-800 pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab('builder')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
             activeTab === 'builder'
               ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
@@ -327,7 +378,7 @@ export const Discover: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('curated')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
             activeTab === 'curated'
               ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
@@ -339,7 +390,7 @@ export const Discover: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('dorks')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
             activeTab === 'dorks'
               ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
@@ -351,7 +402,7 @@ export const Discover: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('presets')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
             activeTab === 'presets'
               ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
@@ -368,10 +419,20 @@ export const Discover: React.FC = () => {
           {/* Controls Column */}
           <div className="lg:col-span-2 space-y-5">
             <div className="p-6 rounded-2xl bg-slate-850/60 border border-slate-750 space-y-4">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Search className="w-4 h-4 text-sky-400" />
-                Targeting & Platform Parameters
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <Search className="w-4 h-4 text-sky-400" />
+                  Targeting & Platform Parameters
+                </h2>
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-slate-200 text-xs font-medium border border-slate-700"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset Filters</span>
+                </button>
+              </div>
 
               {/* Platform Selector */}
               <div>
@@ -404,7 +465,7 @@ export const Discover: React.FC = () => {
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
                     <Briefcase className="w-3.5 h-3.5 text-sky-400" />
-                    <span>Industry Niche</span>
+                    <span>Industry Niche (12 Categories)</span>
                   </label>
                   <select
                     value={selectedIndustry}
@@ -453,20 +514,70 @@ export const Discover: React.FC = () => {
                 </div>
               </div>
 
-              {/* Language Mode */}
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Language & Query Mode</label>
+              {/* Service Type & Commercial Intent Signals */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+                    <span>Specific Service Pitch</span>
+                  </label>
+                  <select
+                    value={serviceType}
+                    onChange={(e) => setServiceType(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                  >
+                    <option value="">-- Any Web Development Service --</option>
+                    <option value="redesign">Website Redesign & Modernization</option>
+                    <option value="ecommerce">Shopify / E-Commerce Store</option>
+                    <option value="mvp">Startup MVP / Web Application</option>
+                    <option value="maintenance">Maintenance & Speed Optimization</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Post Recency Window</span>
+                  </label>
+                  <select
+                    value={recency}
+                    onChange={(e) => setRecency(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+                  >
+                    <option value="all">Any Time (Sorted by Recency)</option>
+                    <option value="24h">Past 24 Hours / Live Feed</option>
+                    <option value="week">Past Week</option>
+                    <option value="month">Past Month</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Commercial Signals Toggle & Language */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="budgetToggle"
+                    checked={requireBudget}
+                    onChange={(e) => setRequireBudget(e.target.checked)}
+                    className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0"
+                  />
+                  <label htmlFor="budgetToggle" className="text-xs text-slate-300 flex items-center gap-1 cursor-pointer">
+                    <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Require Commercial Intent Tokens (e.g. "budget", "quote", "rate")</span>
+                  </label>
+                </div>
+
                 <div className="flex gap-2">
                   {[
-                    { id: 'en', label: 'English Only' },
-                    { id: 'hinglish', label: 'Hindi / Hinglish ("website banwani hai")' },
-                    { id: 'all', label: 'Combined English & Hinglish' },
+                    { id: 'en', label: 'English' },
+                    { id: 'hinglish', label: 'Hindi / Hinglish' },
+                    { id: 'all', label: 'Combined' },
                   ].map((l) => (
                     <button
                       key={l.id}
                       type="button"
                       onClick={() => setLanguage(l.id)}
-                      className={`py-1.5 px-3 rounded-lg text-xs font-medium border transition-colors ${
+                      className={`py-1 px-2.5 rounded-lg text-xs font-medium border transition-colors ${
                         language === l.id
                           ? 'bg-slate-700 text-white border-slate-500 font-bold'
                           : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-300'
@@ -787,12 +898,22 @@ export const Discover: React.FC = () => {
                       <span className="text-xs font-mono uppercase px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-bold">
                         {preset.platform}
                       </span>
-                      <button
-                        onClick={() => handleDeletePreset(preset.id)}
-                        className="text-slate-500 hover:text-rose-400 text-xs"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleDuplicatePreset(preset)}
+                          title="Duplicate Preset"
+                          className="text-slate-400 hover:text-indigo-400 text-xs"
+                        >
+                          <CopyPlus className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePreset(preset.id)}
+                          title="Delete Preset"
+                          className="text-slate-500 hover:text-rose-400 text-xs"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     <h4 className="font-bold text-white text-base mt-1.5">{preset.preset_name}</h4>
@@ -883,14 +1004,30 @@ export const Discover: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleGenerateIcebreaker}
-                disabled={icebreakerLoading || !icebreakerLeadTitle.trim()}
-                className="w-full py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all disabled:opacity-50"
-              >
-                {icebreakerLoading ? 'Generating Icebreaker...' : 'Generate Icebreaker Message'}
-              </button>
+              <div>
+                <label className="block text-slate-300 font-medium mb-1">
+                  Optional Portfolio Link (Your Website or GitHub)
+                </label>
+                <input
+                  type="url"
+                  value={icebreakerPortfolio}
+                  onChange={(e) => setIcebreakerPortfolio(e.target.value)}
+                  placeholder="https://yourportfolio.dev"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleGenerateIcebreaker}
+                  disabled={icebreakerLoading || !icebreakerLeadTitle.trim()}
+                  className="flex-1 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {icebreakerLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  <span>{icebreakerLoading ? 'Generating...' : icebreakerResult ? 'Regenerate Pitch' : 'Generate Icebreaker Message'}</span>
+                </button>
+              </div>
 
               {icebreakerResult && (
                 <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2 mt-2">
@@ -900,10 +1037,29 @@ export const Discover: React.FC = () => {
                       <span className="text-slate-200">{icebreakerSubject}</span>
                     </div>
                   )}
-                  <div className="font-mono text-xs text-slate-200 whitespace-pre-wrap leading-relaxed select-all">
-                    {icebreakerResult}
+
+                  {/* Editable textarea for final polish before sending */}
+                  <div>
+                    <label className="block text-slate-400 font-medium mb-1">
+                      Message Body (Editable before copying):
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={icebreakerResult}
+                      onChange={(e) => setIcebreakerResult(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-xs text-slate-100 focus:outline-none focus:border-amber-500 leading-relaxed"
+                    />
                   </div>
-                  <div className="flex justify-end pt-1">
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[11px] text-slate-400">
+                      Length: <strong className="text-slate-200">{icebreakerResult.length}</strong> chars
+                      {icebreakerPlatform === 'TWITTER' && (
+                        <span className={`ml-1 ${icebreakerResult.length <= 280 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          ({icebreakerResult.length <= 280 ? 'Fits 280 char limit' : 'Exceeds 280 char limit'})
+                        </span>
+                      )}
+                    </span>
                     <button
                       onClick={() => copyText(icebreakerResult, false)}
                       className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-750 text-xs font-semibold text-slate-200 flex items-center gap-1.5 border border-slate-700"
