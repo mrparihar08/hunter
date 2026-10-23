@@ -37,3 +37,4 @@ class User(Base):
     assigned_leads = relationship("LeadRecord", back_populates="assignee", foreign_keys="LeadRecord.assigned_user_id")
     assigned_tasks = relationship("FollowUpTask", back_populates="assignee")
     activities = relationship("LeadActivity", back_populates="user")
+    presets = relationship("QueryPreset", back_populates="user", cascade="all, delete-orphan")

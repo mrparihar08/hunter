@@ -98,3 +98,89 @@ export interface DeepLinkQuery {
   generated_url: string;
   description: string;
 }
+
+// --- Query Engine & Discovery Types ---
+
+export interface QueryCompileRequest {
+  platform: string;
+  positive_keywords: string[];
+  negative_keywords: string[];
+  industry_id?: string;
+  location_target?: string;
+  language?: string;
+  intent_preset?: string;
+  subreddits?: string[];
+  dork_mode?: string;
+}
+
+export interface CompiledQueryResponse {
+  platform: string;
+  raw_query: string;
+  generated_url: string;
+  positive_clauses: string[];
+  negative_clauses: string[];
+  location_clause?: string;
+  operator_notes: string;
+  integration_status: string;
+}
+
+export interface IndustryPreset {
+  id: string;
+  name: string;
+  buying_intents: string[];
+  hinglish_variants: string[];
+  suggested_services: string[];
+  recommended_negatives: string[];
+  rationale: string;
+}
+
+export interface GeoLocationPreset {
+  region: string;
+  name: string;
+  search_tokens: string[];
+}
+
+export interface DorkQuery {
+  category: string;
+  dork_syntax: string;
+  target_industry: string;
+  target_location: string;
+  generated_url: string;
+  verification_advice: string;
+}
+
+export interface QueryPreset {
+  id: string;
+  user_id: string;
+  preset_name: string;
+  platform: string;
+  industry?: string;
+  location_target?: string;
+  positive_keywords: string[];
+  negative_keywords: string[];
+  language: string;
+  intent_level: string;
+  is_favorite: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IcebreakerRequest {
+  platform: string;
+  lead_title: string;
+  contact_name?: string;
+  industry?: string;
+  tone?: string;
+  language?: string;
+  context_snippet?: string;
+  portfolio_url?: string;
+  audit_issues?: string[];
+}
+
+export interface IcebreakerResponse {
+  platform: string;
+  tone: string;
+  subject_line?: string;
+  message_body: string;
+  caution_notes: string;
+}

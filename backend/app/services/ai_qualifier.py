@@ -146,3 +146,99 @@ CRITICAL: Return ONLY valid JSON:
             "subject_line": f"Quick note regarding {business_or_title}",
             "body_text": f"Hi,\n\nI was reviewing your website and spotted some areas for performance and mobile layout improvements. Would love to connect!\n\n(Fallback: {str(e)[:80]})",
         }
+
+
+async def generate_icebreaker_pitch(
+    platform: str,
+    lead_title: str,
+    contact_name: Optional[str] = None,
+    industry: Optional[str] = None,
+    tone: str = "CONSULTATIVE",
+    language: str = "en",
+    context_snippet: Optional[str] = None,
+    portfolio_url: Optional[str] = None,
+    audit_issues: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """
+    Feature F: Generates tailored, platform-specific outreach icebreakers
+    (X/Twitter, LinkedIn, Reddit, Email, Hinglish) adhering to community guidelines.
+    """
+    p_upper = platform.upper()
+    model = get_gemini_model()
+
+    # Fallback templates if Gemini is unconfigured
+    if not model:
+        port_txt = f" Portfolio: {portfolio_url}" if portfolio_url else ""
+        if p_upper in ("TWITTER", "X"):
+            msg = f"Hey {contact_name or 'there'}! Saw your post regarding {lead_title}. We build modern websites for {industry or 'growing businesses'}. Would love to share a 1-min walkthrough of our work if you're still looking!{port_txt}"
+            subj = None
+        elif p_upper == "REDDIT":
+            msg = f"Hi! Saw your hiring post regarding {lead_title}. I specialize in full-stack web development ({industry or 'web applications'}). Happy to discuss your requirements, scope, and timeline.{port_txt}"
+            subj = None
+        elif p_upper == "HINGLISH" or language in ("hi", "hinglish"):
+            msg = f"Hi {contact_name or 'bhai'}, aapka post dekha regarding {lead_title}. Humne recently similar websites banayi hain. Agar aap requirement share karein toh main quick estimate aur portfolio bhej deta hoon!{port_txt}"
+            subj = f"{lead_title} website requirement inquiry"
+        elif p_upper == "LINKEDIN":
+            msg = f"Hi {contact_name or 'there'},\n\nI noticed your update regarding {lead_title}. As a web development specialist, I help {industry or 'companies'} build high-converting, responsive websites. Would you be open to a brief chat regarding your project scope?{port_txt}\n\nBest regards,"
+            subj = f"Website Development for {lead_title}"
+        else:
+            msg = f"Hi {contact_name or 'there'},\n\nI came across {lead_title} and wanted to reach out regarding your website requirements. We specialize in fast, responsive web design that converts visitors into customers.{port_txt}\n\nWould you be open to connecting this week?\n\nBest regards,"
+            subj = f"Web Development Inquiry — {lead_title}"
+
+        return {
+            "platform": platform,
+            "tone": tone,
+            "subject_line": subj,
+            "message_body": msg,
+            "caution_notes": "Generated via verified template. Review before sending. Never spam.",
+        }
+
+    # Prompt with strict anti-fabrication rules
+    issues_str = ", ".join(audit_issues) if audit_issues else "None reported"
+    prompt = f"""You are a professional freelance website developer crafting an outreach message for a client opportunity.
+Target Platform: {platform}
+Recipient/Opportunity: {lead_title}
+Contact Person: {contact_name or 'Not specified'}
+Industry: {industry or 'General business'}
+Tone: {tone} (SHORT, PROFESSIONAL, FRIENDLY, CONSULTATIVE)
+Language: {language} (en, hi, or hinglish)
+Observed Context: {context_snippet or 'Client seeking website/developer'}
+Portfolio Link: {portfolio_url or 'None'}
+Audit Issues: {issues_str}
+
+CRITICAL RULES:
+1. Mention only facts provided above. NEVER invent past interactions, previous conversations, fake client references, or unverified claims.
+2. If platform is TWITTER, keep it under 280 characters, punchy, conversational, low pressure.
+3. If platform is REDDIT, respect community anti-spam guidelines; do not be overly corporate or salesy.
+4. If language is HINGLISH, write natural, respectful, conversational Indian business Hindi-English.
+5. If platform is EMAIL or LINKEDIN, include a concise subject line.
+
+Return ONLY valid JSON matching this schema:
+{{
+  "subject_line": "<Subject or null for Twitter/Reddit>",
+  "message_body": "<The message text>",
+  "caution_notes": "<Brief note on how to personalize further>"
+}}
+"""
+    try:
+        response = model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "application/json"}
+        )
+        data = json.loads(response.text.strip())
+        return {
+            "platform": platform,
+            "tone": tone,
+            "subject_line": data.get("subject_line"),
+            "message_body": data.get("message_body", "Could not generate message."),
+            "caution_notes": data.get("caution_notes", "Review and personalize before sending."),
+        }
+    except Exception as e:
+        logger.error(f"Gemini icebreaker error: {str(e)}")
+        return {
+            "platform": platform,
+            "tone": tone,
+            "subject_line": f"Website inquiry — {lead_title}",
+            "message_body": f"Hi! Saw your post regarding {lead_title}. We build fast, mobile-friendly websites and would love to help with your project.",
+            "caution_notes": f"Fallback template due to API error: {str(e)[:60]}",
+        }

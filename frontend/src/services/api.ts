@@ -95,6 +95,41 @@ export const searchService = {
     const res = await api.post('/search/places', { query, location });
     return res.data;
   },
+  compileQuery: async (payload: any) => {
+    const res = await api.post('/search/compile', payload);
+    return res.data;
+  },
+  getNiches: async () => {
+    const res = await api.get('/search/niches');
+    return res.data;
+  },
+  getGeoTargets: async () => {
+    const res = await api.get('/search/geo-targets');
+    return res.data;
+  },
+  getStandardNegatives: async () => {
+    const res = await api.get<string[]>('/search/standard-negatives');
+    return res.data;
+  },
+  getDorks: async () => {
+    const res = await api.get('/search/dorks');
+    return res.data;
+  },
+  generateIcebreaker: async (payload: any) => {
+    const res = await api.post('/search/icebreaker', payload);
+    return res.data;
+  },
+  listPresets: async () => {
+    const res = await api.get('/search/presets');
+    return res.data;
+  },
+  createPreset: async (payload: any) => {
+    const res = await api.post('/search/presets', payload);
+    return res.data;
+  },
+  deletePreset: async (presetId: string) => {
+    await api.delete(`/search/presets/${presetId}`);
+  },
 };
 
 export const followUpService = {

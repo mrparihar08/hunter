@@ -5,6 +5,7 @@ from app.models.audit import WebsiteAudit
 from app.models.outreach import OutreachDraft
 from app.models.follow_up import FollowUpTask
 from app.models.activity import LeadActivity
+from app.models.query_preset import QueryPreset
 
 __all__ = [
     "Base",
@@ -19,4 +20,5 @@ __all__ = [
     "OutreachDraft",
     "FollowUpTask",
     "LeadActivity",
+    "QueryPreset",
 ]
