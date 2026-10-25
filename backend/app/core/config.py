@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # AI Provider
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-3.5-flash-lite"
 
     # Google Places (Optional)
     GOOGLE_PLACES_API_KEY: Optional[str] = None

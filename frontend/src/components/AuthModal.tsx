@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Lock, Mail, ShieldCheck, AlertCircle, UserPlus, LogIn } from 'lucide-react';
+import { User, Lock, Mail, ShieldCheck, AlertCircle, UserPlus, LogIn, X, Sparkles } from 'lucide-react';
 import { api } from '../services/api';
+import { useToast } from './Toast';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,12 +16,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
       checkSetupStatus();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const checkSetupStatus = async () => {
     try {
@@ -30,7 +42,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         setIsRegisterMode(true);
       }
     } catch {
-      // If db check fails or offline
+      // offline / mock fallback
     }
   };
 
@@ -52,6 +64,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         });
         localStorage.setItem('hunter_token', res.data.access_token);
         localStorage.setItem('hunter_user', JSON.stringify(res.data.user));
+        toast('Workspace Owner created successfully!', 'success', 'Welcome');
         onSuccess();
         onClose();
       } else {
@@ -65,6 +78,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         });
         localStorage.setItem('hunter_token', res.data.access_token);
         localStorage.setItem('hunter_user', JSON.stringify(res.data.user));
+        toast(`Signed in as ${res.data.user?.full_name || 'Admin'}`, 'success', 'Session Active');
         onSuccess();
         onClose();
       }
@@ -77,41 +91,51 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+      <div 
+        className="glass-panel border border-white/[0.1] rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-5 animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Glow ambient accent */}
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-24 bg-sky-500/20 blur-3xl rounded-full pointer-events-none" />
+
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
-              <ShieldCheck className="w-5 h-5" />
+        <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 text-sky-400 border border-sky-500/30 flex items-center justify-center font-bold shadow-glow-sky">
+              <ShieldCheck className="w-5 h-5 text-sky-400" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-1.5">
                 {isRegisterMode ? 'Setup Workspace Owner' : 'Sign In to Workspace'}
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               </h3>
               <p className="text-xs text-slate-400">
                 {isRegisterMode
-                  ? 'First-time setup: create your initial admin account'
-                  : 'Enter your credentials to access saved leads'}
+                  ? 'First-time setup: initialize secure admin credentials'
+                  : 'Enter credentials to access saved leads & pipeline'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white font-bold">
-            ✕
+          <button 
+            onClick={onClose} 
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Mode Switcher Tabs */}
-        <div className="flex rounded-lg bg-slate-850 p-1 border border-slate-800">
+        <div className="flex rounded-xl bg-slate-950/70 p-1 border border-white/[0.06]">
           <button
             type="button"
             onClick={() => {
               setIsRegisterMode(false);
               setError(null);
             }}
-            className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               !isRegisterMode
-                ? 'bg-sky-500 text-slate-950 shadow-sm'
+                ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/20'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -125,28 +149,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               setIsRegisterMode(true);
               setError(null);
             }}
-            className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               isRegisterMode
-                ? 'bg-sky-500 text-slate-950 shadow-sm'
+                ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/20'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <UserPlus className="w-3.5 h-3.5" />
-            <span>Setup Owner (First-Time)</span>
+            <span>Setup Owner</span>
           </button>
         </div>
 
         {error && (
-          <div className="p-3 rounded-lg text-xs font-medium bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-300 border border-rose-500/30 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           {isRegisterMode && (
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Full Name *</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Full Name *</label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
                 <input
@@ -155,29 +179,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   placeholder="e.g. Preet (Owner)"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-900/90 border border-white/[0.08] focus:border-sky-500 rounded-xl pl-9 pr-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 transition-colors focus:outline-none"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Email Address *</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Email Address *</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
               <input
                 type="email"
                 required
-                placeholder="preet@hunter.local"
+                placeholder="admin@hunter.io"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500"
+                className="w-full bg-slate-900/90 border border-white/[0.08] focus:border-sky-500 rounded-xl pl-9 pr-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 transition-colors focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Password *</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Password *</label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
               <input
@@ -186,7 +210,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500"
+                className="w-full bg-slate-900/90 border border-white/[0.08] focus:border-sky-500 rounded-xl pl-9 pr-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 transition-colors focus:outline-none"
               />
             </div>
           </div>
@@ -195,13 +219,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm transition-all disabled:opacity-50 shadow-lg shadow-sky-500/20"
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 shadow-lg shadow-sky-500/25 flex items-center justify-center gap-2 cursor-pointer"
             >
-              {loading
-                ? 'Processing...'
-                : isRegisterMode
-                ? 'Create Owner Account & Enter'
-                : 'Sign In to Workspace'}
+              {loading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : isRegisterMode ? (
+                <>
+                  <UserPlus className="w-4 h-4" />
+                  <span>Create Owner Account</span>
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In to Workspace</span>
+                </>
+              )}
             </button>
           </div>
         </form>

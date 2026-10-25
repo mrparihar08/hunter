@@ -54,6 +54,12 @@ async def qualify_lead(
         website_url=lead.canonical_domain,
     )
 
+    lead.intent_category = eval_result.get("intent_category")
+    lead.lead_score = eval_result["score"]
+    lead.confidence_score = eval_result.get("confidence")
+    lead.positive_evidence = eval_result.get("positive_evidence", [])
+    lead.negative_evidence = eval_result.get("negative_evidence", [])
+    lead.explanation = eval_result.get("reason")
     lead.ai_fit_score = eval_result["score"]
     lead.ai_qualification_category = AICategory(eval_result["category"])
     lead.ai_qualification_reason = eval_result["reason"]

@@ -2,8 +2,13 @@ import axios from 'axios';
 import {
   DeepLinkQuery,
   FollowUpTask,
+  HackerNewsSearchResponse,
   LeadRecord,
+  MultiQueryCompileRequest,
+  MultiQueryCompileResponse,
   OutreachDraft,
+  SearchGroupPreset,
+  SourceRegistryItem,
   WebsiteAudit,
 } from '../types';
 
@@ -55,6 +60,10 @@ export const leadService = {
     const res = await api.patch<LeadRecord>(`/leads/${id}`, data);
     return res.data;
   },
+  submitFeedback: async (id: string, feedback: string, notes?: string) => {
+    const res = await api.post<LeadRecord>(`/leads/${id}/feedback`, { feedback, notes });
+    return res.data;
+  },
 };
 
 export const auditService = {
@@ -81,6 +90,24 @@ export const aiService = {
 };
 
 export const searchService = {
+  getSources: async (category?: string) => {
+    const res = await api.get<SourceRegistryItem[]>('/search/sources', {
+      params: category && category !== 'all' ? { category } : undefined,
+    });
+    return res.data;
+  },
+  compileMulti: async (payload: MultiQueryCompileRequest) => {
+    const res = await api.post<MultiQueryCompileResponse>('/search/compile-multi', payload);
+    return res.data;
+  },
+  searchHackerNews: async (payload: { query: string; tags?: string; hits_per_page?: number }) => {
+    const res = await api.post<HackerNewsSearchResponse>('/search/hackernews', payload);
+    return res.data;
+  },
+  getSearchGroups: async () => {
+    const res = await api.get<SearchGroupPreset[]>('/search/groups');
+    return res.data;
+  },
   getCuratedDeepLinks: async () => {
     const res = await api.get<DeepLinkQuery[]>('/search/deep-links');
     return res.data;
@@ -158,6 +185,10 @@ export const followUpService = {
 export const analyticsService = {
   getOverview: async () => {
     const res = await api.get('/analytics/overview');
+    return res.data;
+  },
+  getRelevanceMetrics: async () => {
+    const res = await api.get('/analytics/relevance');
     return res.data;
   },
 };

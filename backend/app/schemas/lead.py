@@ -20,6 +20,11 @@ class LeadSourceResponse(LeadSourceBase):
         from_attributes = True
 
 
+class LeadFeedbackRequest(BaseModel):
+    feedback: str  # REAL_BUYER | DEVELOPER_PROMOTION | NOT_RELEVANT
+    notes: Optional[str] = None
+
+
 class LeadBase(BaseModel):
     business_or_title: str
     lead_type: LeadType
@@ -37,6 +42,14 @@ class LeadCreate(LeadBase):
     source_url: str
     source_external_id: Optional[str] = None
     source_payload: Optional[Dict[str, Any]] = None
+    author_role: Optional[str] = None
+    intent_category: Optional[str] = None
+    lead_score: Optional[int] = None
+    confidence_score: Optional[float] = None
+    positive_evidence: Optional[List[str]] = None
+    negative_evidence: Optional[List[str]] = None
+    explanation: Optional[str] = None
+    search_group: Optional[str] = None
 
 
 class LeadUpdate(BaseModel):
@@ -49,6 +62,10 @@ class LeadUpdate(BaseModel):
     estimated_budget: Optional[str] = None
     assigned_user_id: Optional[uuid.UUID] = None
     is_archived: Optional[bool] = None
+    feedback_label: Optional[str] = None
+    intent_category: Optional[str] = None
+    lead_score: Optional[int] = None
+    explanation: Optional[str] = None
 
 
 class LeadResponse(LeadBase):
@@ -56,6 +73,14 @@ class LeadResponse(LeadBase):
     ai_fit_score: Optional[int] = None
     ai_qualification_category: Optional[AICategory] = None
     ai_qualification_reason: Optional[str] = None
+    intent_category: Optional[str] = None
+    lead_score: Optional[int] = None
+    confidence_score: Optional[float] = None
+    positive_evidence: Optional[List[str]] = None
+    negative_evidence: Optional[List[str]] = None
+    explanation: Optional[str] = None
+    feedback_label: Optional[str] = None
+    search_group: Optional[str] = None
     assigned_user_id: Optional[uuid.UUID] = None
     created_by_user_id: uuid.UUID
     is_archived: bool

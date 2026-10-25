@@ -74,6 +74,16 @@ class LeadRecord(Base):
     )
     ai_qualification_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    # Buyer Intent & Lead Intelligence
+    intent_category: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    lead_score: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
+    confidence_score: Mapped[Optional[float]] = mapped_column(nullable=True)
+    positive_evidence: Mapped[Optional[list]] = mapped_column(JSONB, default=list, nullable=True)
+    negative_evidence: Mapped[Optional[list]] = mapped_column(JSONB, default=list, nullable=True)
+    explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    feedback_label: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    search_group: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
     # Ownership & Assignment
     assigned_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True

@@ -24,6 +24,16 @@ export type LeadStatus =
 
 export type AICategory = 'EXPLICIT_NEED' | 'INFERRED_OPPORTUNITY' | 'SPECULATIVE';
 
+export type IntentCategory =
+  | 'ACTIVE_BUYER'
+  | 'PROJECT_REQUEST'
+  | 'BUSINESS_OPPORTUNITY'
+  | 'DEVELOPER_PROMOTION'
+  | 'GENERAL_DISCUSSION'
+  | 'UNCERTAIN';
+
+export type FeedbackLabel = 'REAL_BUYER' | 'DEVELOPER_PROMOTION' | 'NOT_RELEVANT';
+
 export interface LeadSource {
   id: string;
   platform: string;
@@ -47,6 +57,14 @@ export interface LeadRecord {
   ai_fit_score?: number;
   ai_qualification_category?: AICategory;
   ai_qualification_reason?: string;
+  intent_category?: IntentCategory;
+  lead_score?: number;
+  confidence_score?: number;
+  positive_evidence?: string[];
+  negative_evidence?: string[];
+  explanation?: string;
+  feedback_label?: FeedbackLabel;
+  search_group?: string;
   assigned_user_id?: string;
   created_by_user_id: string;
   is_archived: boolean;
@@ -101,6 +119,23 @@ export interface DeepLinkQuery {
 
 // --- Query Engine & Discovery Types ---
 
+export interface SubQueryItem {
+  label: string;
+  raw_query: string;
+  generated_url: string;
+  operator_notes?: string;
+}
+
+export interface SearchGroupPreset {
+  id: string;
+  name: string;
+  description: string;
+  is_indirect: boolean;
+  default_positive_keywords: string[];
+  default_hinglish_keywords: string[];
+  default_negative_exclusions: string[];
+}
+
 export interface QueryCompileRequest {
   platform: string;
   positive_keywords: string[];
@@ -114,6 +149,7 @@ export interface QueryCompileRequest {
   intent_preset?: string;
   subreddits?: string[];
   dork_mode?: string;
+  search_group?: string;
 }
 
 export interface CompiledQueryResponse {
@@ -125,6 +161,8 @@ export interface CompiledQueryResponse {
   location_clause?: string;
   operator_notes: string;
   integration_status: string;
+  search_group?: string;
+  sub_queries?: SubQueryItem[];
 }
 
 export interface IndustryPreset {
@@ -186,4 +224,62 @@ export interface IcebreakerResponse {
   subject_line?: string;
   message_body: string;
   caution_notes: string;
+}
+
+
+export interface SourceRegistryItem {
+  source_id: string;
+  name: string;
+  category: 'social' | 'freelance' | 'directory' | 'startup' | 'search_engine' | 'other';
+  source_mode: 'official_api' | 'authorized_integration' | 'manual_search' | 'not_configured' | 'unsupported';
+  description: string;
+  is_automated: boolean;
+  auth_status: 'READY' | 'NEEDS_KEY' | 'NOT_REQUIRED' | 'RESTRICTED';
+  supported_filters: string[];
+  is_indirect: boolean;
+  compliance_notes?: string;
+  example_url?: string;
+}
+
+export interface MultiQueryCompileRequest {
+  sources: string[];
+  positive_keywords?: string[];
+  negative_keywords?: string[];
+  industry_id?: string;
+  location_target?: string;
+  service_type?: string;
+  recency?: string;
+  require_budget_signals?: boolean;
+  language?: string;
+  search_group?: string;
+  subreddits?: string[];
+  dork_mode?: string;
+}
+
+export interface MultiQueryCompileResponse {
+  queries: CompiledQueryResponse[];
+  total_sources: number;
+  total_sub_queries: number;
+}
+
+export interface HackerNewsLeadItem {
+  object_id: string;
+  title: string;
+  story_text?: string;
+  url: string;
+  author: string;
+  created_at: string;
+  intent_category: IntentCategory;
+  lead_score: number;
+  positive_evidence: string[];
+  negative_evidence: string[];
+  explanation: string;
+  is_indirect: boolean;
+}
+
+export interface HackerNewsSearchResponse {
+  status: string;
+  message: string;
+  total_hits: number;
+  leads: HackerNewsLeadItem[];
 }

@@ -12,13 +12,19 @@ from app.schemas.search import (
     DeepLinkQuery,
     DorkQuery,
     GeoLocationPreset,
+    HackerNewsSearchRequest,
+    HackerNewsSearchResponse,
     IcebreakerRequest,
     IcebreakerResponse,
     IndustryPreset,
+    MultiQueryCompileRequest,
+    MultiQueryCompileResponse,
     PlacesSearchRequest,
     QueryCompileRequest,
     QueryPresetCreate,
     QueryPresetResponse,
+    SearchGroupPreset,
+    SourceRegistryItem,
 )
 from app.services.adapters.deep_links import (
     generate_curated_deep_links,
@@ -28,10 +34,30 @@ from app.services.adapters.deep_links import (
     get_standard_exclusions,
 )
 from app.services.adapters.google_places import search_google_places
+from app.services.adapters.hackernews import search_hacker_news
 from app.services.ai_qualifier import generate_icebreaker_pitch
-from app.services.query_compiler import compile_search_query
+from app.services.query_compiler import (
+    compile_multi_queries,
+    compile_search_query,
+    get_search_groups,
+)
+from app.services.source_registry import get_registered_sources
 
 router = APIRouter()
+
+
+@router.get("/sources", response_model=List[SourceRegistryItem])
+async def list_registered_sources(
+    category: Optional[str] = Query(None, description="social | freelance | directory | startup | search_engine | other | all")
+):
+    """Returns the unified source registry catalog with categories, modes, and query capabilities."""
+    return get_registered_sources(category=category)
+
+
+@router.get("/groups", response_model=List[SearchGroupPreset])
+async def list_search_groups():
+    """Returns curated intent-based search groups (Group A, B, C, D)."""
+    return get_search_groups()
 
 
 @router.get("/deep-links", response_model=List[DeepLinkQuery])
@@ -47,6 +73,25 @@ async def compile_query(request: QueryCompileRequest):
     into a valid, platform-tailored Boolean search query with live URL.
     """
     return compile_search_query(request)
+
+
+@router.post("/compile-multi", response_model=MultiQueryCompileResponse)
+async def compile_multiple_sources(request: MultiQueryCompileRequest):
+    """Compiles platform-specific search queries for multiple selected sources in a single request."""
+    return compile_multi_queries(request)
+
+
+@router.post("/hackernews", response_model=HackerNewsSearchResponse)
+async def search_hn_live(request: HackerNewsSearchRequest):
+    """
+    Executes live, automated search against official Hacker News Algolia API
+    and evaluates buyer intent with explainable scores.
+    """
+    return await search_hacker_news(
+        query=request.query,
+        tags=request.tags or "story",
+        hits_per_page=request.hits_per_page,
+    )
 
 
 @router.post("/icebreaker", response_model=IcebreakerResponse)
